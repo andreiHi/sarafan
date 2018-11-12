@@ -5,6 +5,11 @@ package letscode.sarafan.domain;
  * @version $Id$.
  * @since 0.1.
  */
-public class Views {
-    private static final Logger LOG = LogManager.getLogger(Views.class);
+public final class Views {
+
+    public interface Id {}
+
+    public interface IdName extends Id {}
+
+    public interface FullMessage extends Id {}
 }

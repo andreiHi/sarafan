@@ -8,5 +8,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * @version $Id$.
  * @since 0.1.
  */
-public interface UserDetailsPepo extends JpaRepository<User, String> {
+public interface UserDetailsRepo extends JpaRepository<User, String> {
 }

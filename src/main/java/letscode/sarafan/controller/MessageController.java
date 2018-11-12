@@ -1,8 +1,19 @@
 package letscode.sarafan.controller;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.fasterxml.jackson.annotation.JsonView;
+import letscode.sarafan.domain.Message;
+import letscode.sarafan.domain.Views;
+import letscode.sarafan.exceptions.NotFoundException;
+import letscode.sarafan.repository.MessageRepository;
+import org.springframework.beans.BeanUtils;
+import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.concurrent.CompletableFuture;
+
+import static java.util.concurrent.CompletableFuture.completedFuture;
 
 /**
  * @author Hincu Andrei (andreih1981@gmail.com)on 13.10.2018.
@@ -13,8 +24,49 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("message")
 public class MessageController {
 
+    private final MessageRepository messageRepo;
+
+    public MessageController(MessageRepository repository) {
+        messageRepo = repository;
+    }
+
+    @Async
     @GetMapping
-    public String list() {
-        return "index";
+    @JsonView(Views.IdName.class)
+    public CompletableFuture<ResponseEntity> list() {
+        return completedFuture(messageRepo.findAll())
+                .thenApply(ResponseEntity::ok);
+    }
+
+    @Async
+    @GetMapping("{id}")
+    @JsonView(Views.FullMessage.class)
+    public CompletableFuture<ResponseEntity> getOne(@PathVariable Long id) {
+        return completedFuture(messageRepo.findById(id)
+                .orElseThrow(NotFoundException::new))
+                .thenApply(ResponseEntity::ok);
+    }
+
+
+    @Async
+    @PostMapping
+    public CompletableFuture<ResponseEntity> create(@RequestBody Message message) {
+        message.setCreationDate(LocalDateTime.now());
+        return completedFuture(messageRepo.save(message))
+                .thenApply(ResponseEntity::ok);
+    }
+
+    @Async
+    @PutMapping("{id}")
+    public CompletableFuture<ResponseEntity> updateMessage(@RequestBody Message message,
+                                             @PathVariable("id") Message messageDb) {
+        BeanUtils.copyProperties(message, messageDb, "id");
+       return completedFuture(messageRepo.save(messageDb)).thenApply(ResponseEntity::ok);
+    }
+
+    @Async
+    @DeleteMapping("{id}")
+    public void deleteMessage(@PathVariable("id") Message message) {
+        messageRepo.delete(message);
     }
 }
