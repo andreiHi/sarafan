@@ -2,9 +2,17 @@ package letscode.sarafan.domain;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonView;
-import lombok.*;
+import letscode.sarafan.listeners.MessageListener;
+import letscode.sarafan.listeners.annotations.CreatedDate;
+import letscode.sarafan.listeners.annotations.UpdateDate;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
 import javax.persistence.*;
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
+import java.time.OffsetDateTime;
 
 /**
  * @author Hincu Andrei (andreih1981@gmail.com)on 29.10.2018.
@@ -12,6 +20,7 @@ import java.time.LocalDateTime;
  * @since 0.1.
  */
 @Entity
+@EntityListeners(MessageListener.class)
 @Table
 @Data
 @AllArgsConstructor
@@ -20,7 +29,7 @@ import java.time.LocalDateTime;
 public class Message {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(generator = Constans.ID_GENERATOR)
     @Column(nullable = false, unique = true)
     @JsonView(Views.Id.class)
     private Long id;
@@ -28,16 +37,20 @@ public class Message {
     @JsonView(Views.IdName.class)
     private String text;
 
-    @Column(updatable = false)
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    @CreatedDate
+    @Column(updatable = false, length = 2000) //не будет фигурировать в запросах на обнавление
     @JsonView(Views.FullMessage.class)
-    private LocalDateTime creationDate;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    @org.hibernate.annotations.Type(type = "org.hibernate.type.OffsetDateTimeType")
+    private OffsetDateTime creationDate;
 
-    @Override
-    public String toString() {
-        return String.format("Message{ id= '%d', text='%s'}", id, text);
-    }
 
+    @CreatedDate
+    @UpdateDate
+    @JsonView(Views.FullMessage.class)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    @org.hibernate.annotations.Type(type = "org.hibernate.type.OffsetDateTimeType")
+    private OffsetDateTime updateDate;
 
     public Message() {
     }
@@ -58,11 +71,28 @@ public class Message {
         this.text = text;
     }
 
-    public LocalDateTime getCreationDate() {
+    public OffsetDateTime getCreationDate() {
         return creationDate;
     }
 
-    public void setCreationDate(LocalDateTime creationDate) {
+    public void setCreationDate(OffsetDateTime creationDate) {
         this.creationDate = creationDate;
+    }
+    public OffsetDateTime getUpdateDate() {
+        return updateDate;
+    }
+
+    public void setUpdateDate(OffsetDateTime updateDate) {
+        this.updateDate = updateDate;
+    }
+
+    @Override
+    public String toString() {
+        return "Message{" +
+                "id=" + id +
+                ", text='" + text + '\'' +
+//                ", creationDate=" + creationDate +
+//                ", updateDate=" + updateDate +
+                '}';
     }
 }

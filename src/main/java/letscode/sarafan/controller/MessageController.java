@@ -7,10 +7,13 @@ import letscode.sarafan.exceptions.NotFoundException;
 import letscode.sarafan.repository.MessageRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -34,7 +37,9 @@ public class MessageController {
     @GetMapping
     @JsonView(Views.IdName.class)
     public CompletableFuture<ResponseEntity> list() {
-        return completedFuture(messageRepo.findAll())
+        List<Message> all = messageRepo.findAll();
+        System.out.println(all);
+        return completedFuture(all)
                 .thenApply(ResponseEntity::ok);
     }
 
@@ -51,7 +56,7 @@ public class MessageController {
     @Async
     @PostMapping
     public CompletableFuture<ResponseEntity> create(@RequestBody Message message) {
-        message.setCreationDate(LocalDateTime.now());
+        System.out.println(message);
         return completedFuture(messageRepo.save(message))
                 .thenApply(ResponseEntity::ok);
     }
@@ -68,5 +73,11 @@ public class MessageController {
     @DeleteMapping("{id}")
     public void deleteMessage(@PathVariable("id") Message message) {
         messageRepo.delete(message);
+    }
+
+    @MessageMapping("/changeMessage")
+    @SendTo("/topic/activity")
+    public Message message(Message message) {
+        return messageRepo.save(message);
     }
 }
